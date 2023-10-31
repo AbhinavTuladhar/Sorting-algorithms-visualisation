@@ -4,9 +4,11 @@ const increment = height / (width / barWidth)
 const barCount = Math.floor(width / barWidth)
 
 let values = []
+let states = []
 let i = 0;
 let j = i + 1;
 let frequency = 32
+let delay = 0
 
 const shuffle = (array) => { 
   for (let i = array.length - 1; i > 0; i--) { 
@@ -25,23 +27,47 @@ function setup() {
   for (let i = 0; i < barCount; i++) {
     values.push(step)
     step += increment
+    states.push(-1)
   }
 
   values = shuffle(values)
+  asyncSelectionSort()
 }
 
 function draw() {
   background(20)
-  selectionSort()
+  // selectionSort()
   drawGraph()
 }
 
 function drawGraph() {
   stroke(0)
-  fill(255)
   values.forEach((value, index) => {
+    if (states[index] === 1) {
+      fill([255, 0, 0])
+    } else {
+      fill(255)
+    }
     rect(index * barWidth, height - value, barWidth, value)
   })
+}
+
+async function asyncSelectionSort() {
+  let min
+  for (let i = 0; i < values.length; i++) {
+    for(let j = i + 1; j < values.length; j++) {
+      min = i
+      if (values[j] < values[min]) {
+        min = j
+      }
+      if (min !== i) {
+        states[min] = 1
+        await sleep(delay)
+        swap(values, i, min)
+        states[min] = -1
+      }
+    }
+  }
 }
 
 function selectionSort() {
@@ -65,16 +91,6 @@ function selectionSort() {
       }
     } else {
       noLoop()
-    }
-  }
-}
-
-function selectionSortActual(array) {
-  for(let i = 1; i < array.length; i++) {
-    for(let j = i - 1; j > -1; j--) {
-      if (array[j+1] < array[j]) {
-        [array[j+1], array[j]] = [array[j], array[j+1]]
-      }
     }
   }
 }
@@ -104,4 +120,8 @@ function swap(array, i, j) {
   let temp = array[i]
   array[i] = array[j]
   array[j] = temp
+}
+
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }
