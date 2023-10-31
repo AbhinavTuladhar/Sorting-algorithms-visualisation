@@ -4,7 +4,8 @@ const increment = height / (width / barWidth)
 const barCount = Math.floor(width / barWidth)
 
 let values = []
-let delay = 100
+let states = []
+let delay = 0
 let radix = 2
 
 const shuffle = (array) => { 
@@ -20,39 +21,37 @@ let currentDigit = 0;
 
 function setup() {
   createCanvas(width, height);
-  frameRate(2000)
+  frameRate(60)
 
   let step = 0
 
   for (let i = 0; i < barCount; i++) {
     values.push(step)
     step += increment
+    states.push(-1)
   }
 
   // Shuffle the array
   values = shuffle(values)
+
+  asyncRadixSort()
 }
 
 function draw() {
   background(20)
-  drawGraph();
-
-  if (!sorting && currentDigit < digitCount(Math.max(...values))) {
-    sorting = true;
-    radixSort(values, currentDigit)
-      .then(result => {
-        values = result;
-        sorting = false;
-        currentDigit++;
-      });
-  }
+  drawGraph()
 }
 
 function drawGraph() {
   noStroke()
-  values.forEach((value, index) => {
-    rect(index * barWidth, height - value, barWidth, value)
-  })
+  for(let i = 0; i < values.length; i++) {
+    if (states[i] === 1) {
+      fill([255, 0, 0])
+    } else {
+      fill(255)
+    }
+    rect(i * barWidth, height - values[i], barWidth, values[i])
+  }
 }
 
 const logBase = (n, base) => Math.log(n) / Math.log(base);
@@ -66,19 +65,36 @@ function digitCount(number) {
   return Math.floor(logBase(Math.abs(number), radix)) + 1
 }
 
-async function radixSort(array, digit) {
-  const maxCount = digitCount(Math.max(...array));
-  const buckets = Array.from({ length: radix }, () => [])
-  let result
-
-  for (let i = 0; i < array.length; i++) {
-    let kthDigit = getDigit(array[i], digit)
-    buckets[kthDigit].push(array[i])
+function mostDigits(nums) {
+  let maxDigits = 0
+  for (let i = 0; i < nums.length; i++) {
+    maxDigits = Math.max(maxDigits, digitCount(nums[i]))
   }
-  await sleep(delay);
-  result = [].concat(...buckets);
+  return maxDigits
+}
 
-  return result;
+async function asyncRadixSort() {
+  const maxCount = mostDigits(values)
+  
+  for (let k = 0; k < maxCount; k++) {
+  // for (let k = maxCount - 1; k >= -5; k--) {
+    let buckets = Array.from({ length: radix }, () => [])
+
+    for (let i = 0; i < values.length; i++) {
+      let digit = getDigit(values[i], k)
+      buckets[digit].push(values[i])
+    }
+
+    let index = 0;
+    for (let i = 0; i < buckets.length; i++) {
+      while (buckets[i].length > 0) {
+        values[index++] = buckets[i].shift()
+        states[index] = 1
+        await sleep(delay)
+        states[index] = -1
+      }
+    }
+  }
 }
 
 async function sleep(ms) {
