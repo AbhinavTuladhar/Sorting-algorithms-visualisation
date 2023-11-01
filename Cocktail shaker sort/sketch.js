@@ -5,7 +5,8 @@ const barCount = Math.floor(width / barWidth)
 
 let values = []
 let states = []
-let delay = 5
+let valuesAndColours = []
+let delay = 0
 
 const shuffle = (array) => { 
   for (let i = array.length - 1; i > 0; i--) { 
@@ -18,17 +19,35 @@ const shuffle = (array) => {
 function setup() {
   createCanvas(width, height);
   frameRate(60)
+  colorMode(RGB)
+
+  const colourList = [
+    color(255, 0, 0),    // Red
+    color(255, 165, 0),  // Orange
+    color(255, 255, 0),  // Yellow
+    color(0, 255, 0),    // Green
+    color(0, 0, 255),    // Blue,
+    color(255, 0, 255),  // Fuchsia
+    color(255, 0, 0),    // Red
+  ]
 
   let step = increment
 
   for (let i = 0; i < barCount; i++) {
-    values.push(step)
     step += increment
-    states.push(-1)
+
+    const fromColourIndex = floor(i / (barCount / (colourList.length - 1)))
+    const toColourIndex = ceil(i / (barCount / (colourList.length - 1)))
+    const pct = (i % (barCount / (colourList.length - 1))) / (barCount / (colourList.length - 1))
+    const interColour = lerpColor(colourList[fromColourIndex], colourList[toColourIndex], pct)
+
+    valuesAndColours.push({
+      value: step, colour: interColour
+    })
   }
 
-  values = shuffle(values)
-  cocktailSort()
+  valuesAndColours = shuffle(valuesAndColours)
+  cocktailSort(valuesAndColours)
 }
 
 function draw() {
@@ -37,28 +56,34 @@ function draw() {
 }
 
 function drawGraph() {
-  stroke(0)
-  fill(255)
-  values.forEach((value, index) => {
-    if (states[index] === 1) {
-      fill([255, 0, 0])
-    } else {
-      fill(255)
-    }
+  noStroke()
+  valuesAndColours.forEach((obj, index) => {
+    const { value, colour } = obj
+    fill(colour)
     rect(index * barWidth, height - value, barWidth, value)
   })
+  // stroke(0)
+  // fill(255)
+  // valuesAndColours.forEach((obj, index) => {
+  //   if (states[index] === 1) {
+  //     fill([255, 0, 0])
+  //   } else {
+  //     fill(255)
+  //   }
+  //   rect(index * barWidth, height - obj.value, barWidth, obj.value)
+  // })
 }
 
-async function cocktailSort() {
+async function cocktailSort(array) {
   let i
   let swapped = true
   while(swapped) {
     swapped = false
-    for(let i = 0; i < values.length - 2; i++) {
-      if (values[i] > values[i+1]) {
+    for(let i = 0; i < array.length - 2; i++) {
+      if (array[i].value > array[i+1].value) {
         states[i] = 1
         await sleep(delay)
-        swap(values, i, i+1)
+        swap(array, i, i+1)
         states[i] = -1
         swapped = true
       }
@@ -67,11 +92,11 @@ async function cocktailSort() {
       break
     }
     swapped = false
-    for(let i = values.length - 2; i > 0; i--) {
-      if (values[i] > values[i+1]) {
+    for(let i = array.length - 2; i > 0; i--) {
+      if (array[i].value > array[i+1].value) {
         states[i+1] = 1
         await sleep(delay)
-        swap(values, i, i+1)
+        swap(array, i, i+1)
         states[i+1] = -1
         swapped = true
       }
