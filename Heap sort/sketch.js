@@ -1,11 +1,10 @@
 const width = 1350, height = 630
-const barWidth = 2
+const barWidth = 1
 const increment = height / (width / barWidth)
 const barCount = Math.floor(width / barWidth)
 
-let values = []
-let states = []
-let delay = 10
+let valuesAndColours = []
+let delay = 0
 
 const shuffle = (array) => { 
   for (let i = array.length - 1; i > 0; i--) { 
@@ -18,17 +17,35 @@ const shuffle = (array) => {
 function setup() {
   createCanvas(width, height);
   frameRate(60)
+  colorMode(RGB)
+
+  const colourList = [
+    color(255, 0, 0),    // Red
+    color(255, 165, 0),  // Orange
+    color(255, 255, 0),  // Yellow
+    color(0, 255, 0),    // Green
+    color(0, 0, 255),    // Blue,
+    color(255, 0, 255),  // Fuchsia
+    color(255, 0, 0),    // Red
+  ]
 
   let step = increment
 
   for (let i = 0; i < barCount; i++) {
-    values.push(step)
     step += increment
-    states.push(-1)
+
+    const fromColourIndex = floor(i / (barCount / (colourList.length - 1)))
+    const toColourIndex = ceil(i / (barCount / (colourList.length - 1)))
+    const pct = (i % (barCount / (colourList.length - 1))) / (barCount / (colourList.length - 1))
+    const interColour = lerpColor(colourList[fromColourIndex], colourList[toColourIndex], pct)
+
+    valuesAndColours.push({
+      value: step, colour: interColour
+    })
   }
 
-  values = shuffle(values)
-  heapSort()
+  valuesAndColours = shuffle(valuesAndColours)
+  heapSort(valuesAndColours)
 }
 
 function draw() {
@@ -38,36 +55,36 @@ function draw() {
 
 function drawGraph() {
   noStroke()
-  values.forEach((value, index) => {
-    if (states[index] === 1) {
-      fill([255, 0, 0])
-    } else {
-      fill(255)
-    }
-    rect(index * barWidth, height - value, barWidth, value)
+  valuesAndColours.forEach((obj, i) => {
+    const { value, colour } = obj
+    fill(colour)
+    rect(i * barWidth, height - value, barWidth, value)
   })
 }
 
+/**
+ * Convert an array into heap
+ * @param {Array<{ value: number, color: color}> } array An array of objects with two keys - the value itself and the corresponding colour
+ * @param {Number}                                N      The length of the array
+ * @param {Number}                                i      The index of the parent element.
+ */
 async function heapify(array, N, i) {
   // Assume that the root node is the larger one
   let largest = i
   let left = 2*i + 1
   let right = left + 1
   
-  if (left < N && array[left] > array[largest]) {
+  if (left < N && array[left].value > array[largest].value) {
     largest = left
   }
   
-  if (right < N && array[right] > array[largest]) {
+  if (right < N && array[right].value > array[largest].value) {
     largest = right
   }
   
   // if largest is not the root
   if (largest !== i) {
-    // states[i] = 1
-    // await sleep(0)
     swap(array, i, largest)
-    // states[i] = -1
     await heapify(array, N, largest)
   }
 }
@@ -81,17 +98,15 @@ async function buildMaxHeap(array) {
   }
 }
 
-// Heapify the array
-async function heapSort() {
-  await buildMaxHeap(values)
+async function heapSort(array) {
+  // Heapify the array
+  await buildMaxHeap(array)
   
   // Perform the sort
-  for (let i = values.length - 1; i > 0; i--) {
-    states[i] = 1
+  for (let i = array.length - 1; i > 0; i--) {
     await sleep(delay)
-    swap(values, 0, i)
-    states[i] = -1
-    await heapify(values, i, 0)
+    swap(array, 0, i)
+    await heapify(array, i, 0)
   }
 }
 
