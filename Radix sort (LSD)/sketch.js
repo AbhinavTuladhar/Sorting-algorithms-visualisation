@@ -3,10 +3,10 @@ const barWidth = 2
 const increment = height / (width / barWidth)
 const barCount = Math.floor(width / barWidth)
 
-let values = []
 let states = []
+let valuesAndColours = []
 let delay = 0
-let radix = 2
+let radix = 5
 
 const shuffle = (array) => { 
   for (let i = array.length - 1; i > 0; i--) { 
@@ -22,19 +22,36 @@ let currentDigit = 0;
 function setup() {
   createCanvas(width, height);
   frameRate(60)
+  colorMode(RGB)
 
-  let step = 0
+  const colourList = [
+    color(255, 0, 0),    // Red
+    color(255, 165, 0),  // Orange
+    color(255, 255, 0),  // Yellow
+    color(0, 255, 0),    // Green
+    color(0, 0, 255),    // Blue,
+    color(255, 0, 255),  // Fuchsia
+    color(255, 0, 0),    // Red
+  ]
+
+  let step = increment
 
   for (let i = 0; i < barCount; i++) {
-    values.push(step)
     step += increment
-    states.push(-1)
+
+    const fromColourIndex = floor(i / (barCount / (colourList.length - 1)))
+    const toColourIndex = ceil(i / (barCount / (colourList.length - 1)))
+    const pct = (i % (barCount / (colourList.length - 1))) / (barCount / (colourList.length - 1))
+    const interColour = lerpColor(colourList[fromColourIndex], colourList[toColourIndex], pct)
+
+    valuesAndColours.push({
+      value: step, colour: interColour
+    })
   }
 
-  // Shuffle the array
-  values = shuffle(values)
+  valuesAndColours = shuffle(valuesAndColours)
 
-  asyncRadixSort()
+  asyncRadixSort(valuesAndColours)
 }
 
 function draw() {
@@ -44,14 +61,11 @@ function draw() {
 
 function drawGraph() {
   noStroke()
-  for(let i = 0; i < values.length; i++) {
-    if (states[i] === 1) {
-      fill([255, 0, 0])
-    } else {
-      fill(255)
-    }
-    rect(i * barWidth, height - values[i], barWidth, values[i])
-  }
+  valuesAndColours.forEach((obj, index) => {
+    const { value, colour } = obj
+    fill(colour)
+    rect(index * barWidth, height - value, barWidth, value)
+  })
 }
 
 const logBase = (n, base) => Math.log(n) / Math.log(base);
@@ -73,22 +87,22 @@ function mostDigits(nums) {
   return maxDigits
 }
 
-async function asyncRadixSort() {
-  const maxCount = mostDigits(values)
+async function asyncRadixSort(array) {
+  const maxCount = mostDigits(array.map(obj => obj.value))
   
   for (let k = 0; k < maxCount; k++) {
   // for (let k = maxCount - 1; k >= -5; k--) {
     let buckets = Array.from({ length: radix }, () => [])
 
-    for (let i = 0; i < values.length; i++) {
-      let digit = getDigit(values[i], k)
-      buckets[digit].push(values[i])
+    for (let i = 0; i < array.length; i++) {
+      let digit = getDigit(array[i].value, k)
+      buckets[digit].push(array[i])
     }
 
     let index = 0;
     for (let i = 0; i < buckets.length; i++) {
       while (buckets[i].length > 0) {
-        values[index++] = buckets[i].shift()
+        array[index++] = buckets[i].shift()
         states[index] = 1
         await sleep(delay)
         states[index] = -1
