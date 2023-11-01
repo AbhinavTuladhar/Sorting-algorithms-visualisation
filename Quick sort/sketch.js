@@ -1,5 +1,5 @@
 const width = 1350, height = 630
-const barWidth = 2
+const barWidth = 1
 const increment = height / (width / barWidth)
 const barCount = Math.floor(width / barWidth)
 
@@ -20,7 +20,8 @@ const colourMappings = new Map([
 
 let values = []
 let states = []
-let delay = 20
+let delay = 5
+let valuesAndColours = []
 let sortFlag = false
 let sweepInProgress = false
 
@@ -35,20 +36,37 @@ const shuffle = (array) => {
 function setup() {
   createCanvas(width, height);
   frameRate(60)
+  colorMode(RGB)
 
-  let step = 0
+  const colourList = [
+    color(255, 0, 0),    // Red
+    color(255, 165, 0),  // Orange
+    color(255, 255, 0),  // Yellow
+    color(0, 255, 0),    // Green
+    color(0, 0, 255),    // Blue,
+    color(255, 0, 255),  // Fuchsia
+    color(255, 0, 0),    // Red
+  ]
+
+  let step = increment
 
   for (let i = 0; i < barCount; i++) {
-    values.push(step)
     step += increment
-    states.push(-1)
+
+    const fromColourIndex = floor(i / (barCount / (colourList.length - 1)))
+    const toColourIndex = ceil(i / (barCount / (colourList.length - 1)))
+    const pct = (i % (barCount / (colourList.length - 1))) / (barCount / (colourList.length - 1))
+    const interColour = lerpColor(colourList[fromColourIndex], colourList[toColourIndex], pct)
+
+    valuesAndColours.push({
+      value: step, colour: interColour
+    })
   }
 
-  // Shuffle the array
-  let valuesShuffled = shuffle(values)
+  valuesAndColours = shuffle(valuesAndColours)
 
   // quickSortV1(values, 0, values.length)
-  quickSortV2(valuesShuffled, 0, valuesShuffled.length - 1)
+  quickSortV2(valuesAndColours, 0, valuesAndColours.length - 1)
 }
 
 function draw() {
@@ -58,14 +76,9 @@ function draw() {
 
 function drawGraph() {
   noStroke()
-  values.forEach((value, index) => {
-    if (states[index] === 0) {
-      fill(colourMappings.get(0))
-    } else if (states[index] === 1) {
-      fill(colourMappings.get(1))
-    } else {
-      fill(230)
-    }
+  valuesAndColours.forEach((obj, index) => {
+    const { value, colour } = obj
+    fill(colour)
     rect(index * barWidth, height - value, barWidth, value)
   })
 }
@@ -76,7 +89,6 @@ async function quickSortV1(arr, start, end) {
   }
 
   const index = await partition(arr, start, end)
-  states[index] = -1
   await Promise.all([
     quickSortV1(arr, start, index - 1),
     quickSortV1(arr, index + 1, end)
@@ -100,20 +112,12 @@ async function quickSortV2(arr, start, end) {
 }
 
 async function partition(arr, start, end) {
-  for (let i = start; i < end; i++) {
-    // identify the elements being considered currently
-    states[i] = 1;
-  }
-
   let pivotIndex = start
-  let pivotValue = arr[end]
-  states[pivotIndex] = 0
+  let pivotValue = arr[end].value
   for (let i = start; i < end; i++) {
-    if (arr[i] < pivotValue) {
+    if (arr[i].value < pivotValue) {
       await swap(arr, i, pivotIndex)
-      states[pivotIndex] = -1
       pivotIndex++;
-      states[pivotIndex] = 0
     }
   }
   await swap(arr, pivotIndex, end)
@@ -121,13 +125,8 @@ async function partition(arr, start, end) {
 }
 
 async function partitionV2(arr, start, end) {
-  for (let i = start; i < end; i++) {
-    // identify the elements being considered currently
-    states[i] = 1;
-  }
-
   let pivotIndex = Math.floor((start + end) / 2)
-  let pivotValue = arr[pivotIndex]
+  let pivotValue = arr[pivotIndex].value
   let leftPointer = start
   let rightPointer = end
   states[leftPointer] = 0
@@ -135,29 +134,29 @@ async function partitionV2(arr, start, end) {
   states[pivotIndex] = 0
 
   while (leftPointer <= rightPointer) {
-    while (arr[leftPointer] < pivotValue) {
-      states[leftPointer] = -1
+    while (arr[leftPointer].value < pivotValue) {
+      // states[leftPointer] = -1
       leftPointer++;
-      states[leftPointer] = 0
+      // states[leftPointer] = 0
     }
 
-    while (arr[rightPointer] > pivotValue) {
-      states[rightPointer] = -1
+    while (arr[rightPointer].value > pivotValue) {
+      // states[rightPointer] = -1
       rightPointer--;
-      states[rightPointer] = 0
+      // states[rightPointer] = 0
     }
 
     if (leftPointer <= rightPointer) {
       await swap(arr, leftPointer, rightPointer)
-      states[leftPointer] = -1
+      // states[leftPointer] = -1
       leftPointer++;
-      states[leftPointer] = 0
-      states[rightPointer] = -1
+      // states[leftPointer] = 0
+      // states[rightPointer] = -1
       rightPointer--;
-      states[rightPointer] = 0
+      // states[rightPointer] = 0
     }
-    states[leftPointer] = -1
-    states[rightPointer] = -1
+    // states[leftPointer] = -1
+    // states[rightPointer] = -1
   }
   return leftPointer
 }
