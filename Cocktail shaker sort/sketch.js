@@ -22,16 +22,15 @@ function setup() {
   colorMode(RGB)
 
   const colourList = [
-    color(255, 0, 0),    // Red
-    color(255, 165, 0),  // Orange
-    color(255, 255, 0),  // Yellow
-    color(0, 255, 0),    // Green
-    color(0, 0, 255),    // Blue,
-    color(255, 0, 255),  // Fuchsia
-    color(255, 0, 0),    // Red
+    color(255, 0, 0),
+    color(255, 127, 0),
+    color(255, 255, 0),
+    color(0, 255, 0),
+    color(0, 0, 255),
+    color(255, 0, 255)
   ]
 
-  let step = increment
+  let step = 0
 
   for (let i = 0; i < barCount; i++) {
     step += increment

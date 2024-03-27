@@ -8,7 +8,8 @@ let states = []
 let valuesAndColours = []
 let delay = 0
 
-const shuffle = (array) => { 
+const shuffle = async (array) => { 
+  await sleep(2);
   for (let i = array.length - 1; i > 0; i--) { 
     const j = Math.floor(Math.random() * (i + 1)); 
     [array[i], array[j]] = [array[j], array[i]]; 
@@ -16,19 +17,18 @@ const shuffle = (array) => {
   return array; 
 }; 
 
-function setup() {
+async function setup() {
   createCanvas(width, height);
   frameRate(60)
   colorMode(RGB)
 
   const colourList = [
-    color(255, 0, 0),    // Red
-    color(255, 165, 0),  // Orange
-    color(255, 255, 0),  // Yellow
-    color(0, 255, 0),    // Green
-    color(0, 0, 255),    // Blue,
-    color(255, 0, 255),  // Fuchsia
-    color(255, 0, 0),    // Red
+    color(255, 0, 0),
+    color(255, 127, 0),
+    color(255, 255, 0),
+    color(0, 255, 0),
+    color(0, 0, 255),
+    color(255, 0, 255)
   ]
 
   let step = increment
@@ -46,7 +46,9 @@ function setup() {
     })
   }
 
-  valuesAndColours = shuffle(valuesAndColours)
+  await sleep(2000)
+  valuesAndColours = await shuffle(valuesAndColours)
+  await sleep(2000)
   shellSort(valuesAndColours)
 }
 

@@ -28,43 +28,12 @@ function setup() {
   }
 
   values = shuffle(values)
-  oddEvenSort(values)
+  beadSort(values, values.length)
 }
 
 function draw() {
   background(20)
   drawGraph()
-}
-
-async function oddEvenSort(array) {
-  let N = array.length
-  let sorted = false
-  while (!sorted) {
-    sorted = true
-    let temp = 0
-
-    // Perform bubble sort on odd indexed element
-    for(let i = 1; i <= N - 2; i += 2) {
-      if (array[i] > array[i+1]) {
-        states[i] = 1
-        await sleep(delay)
-        swap(array, i, i+1)
-        states[i] = -1
-        sorted = false
-      }
-    }
-
-    // Perform bubble sort on odd indexed element
-    for(let i = 0; i <= N - 2; i += 2) {
-      if (array[i] > array[i+1]) {
-        states[i] = 1
-        await sleep(delay)
-        swap(array, i, i+1)
-        states[i] = -1
-        sorted = false
-      }
-    }
-  }
 }
 
 function drawGraph() {
@@ -78,6 +47,61 @@ function drawGraph() {
     }
     rect(index * barWidth, height - value, barWidth, value)
   })
+}
+
+async function beadSort(a, len) {
+	// Find the maximum element
+	let max = a[0];
+	for (let i = 1; i < len; i++) {
+		if (a[i] > max) {
+			max = a[i];
+		}
+	}
+
+	// allocating memory
+	const beads = new Array(len).fill().map(() => new Array(max).fill(0));
+
+	// mark the beads
+	for (let i = 0; i < len; i++) {
+		for (let j = 0; j < a[i]; j++) {
+			beads[i][j] = 1;
+		}
+	}
+
+	// move down the beads
+	for (let j = 0; j < max; j++) {
+		let sum = 0;
+		for (let i = 0; i < len; i++) {
+      // await sleep(delay)
+			sum += beads[i][j];
+			beads[i][j] = 0;
+		}
+		for (let i = len-1; i >= len-sum; i--) {
+      await sleep(delay)
+			beads[i][j] = 1;
+		}
+	}
+
+	// to get sorted array
+	const result = new Array(len);
+	for (let i = 0; i < len; i++) {
+		let sum = 0;
+		for (let j = 0; j < max; j++) {
+      // await sleep(delay)
+			sum += beads[i][j];
+		}
+		result[i] = sum;
+	}
+
+  // return result
+	
+  let index = 0
+  while(result.length) {
+    await sleep(delay)
+    a[index++] = result.shift()
+  }
+
+  console.log(a)
 }
 
 function swap(array, i, j) {

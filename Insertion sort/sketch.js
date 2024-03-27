@@ -5,10 +5,11 @@ const barCount = Math.floor(width / barWidth)
 
 let values = []
 let states = []
+let valuesAndColours = []
 let i = 0;
 let j = i - 1;
 let frequency = 8
-let delay = 25
+let delay = 0
 
 const shuffle = (array) => { 
   for (let i = array.length - 1; i > 0; i--) { 
@@ -22,16 +23,34 @@ function setup() {
   createCanvas(width, height);
   frameRate(60)
 
+  const colourList = [
+    color(255, 0, 0),
+    color(255, 127, 0),
+    color(255, 255, 0),
+    color(0, 255, 0),
+    color(0, 0, 255),
+    color(255, 0, 255)
+  ]
+
   let step = 0
 
   for (let i = 0; i < barCount; i++) {
     values.push(step)
     step += increment
     states.push(-1)
+
+    const fromColourIndex = floor(i / (barCount / (colourList.length - 1)))
+    const toColourIndex = ceil(i / (barCount / (colourList.length - 1)))
+    const pct = (i % (barCount / (colourList.length - 1))) / (barCount / (colourList.length - 1))
+    const interColour = lerpColor(colourList[fromColourIndex], colourList[toColourIndex], pct)
+
+    valuesAndColours.push({
+      value: step, colour: interColour
+    })
   }
 
-  values = shuffle(values)
-  asyncInsertionSort()
+  valuesAndColours = shuffle(valuesAndColours)
+  asyncInsertionSort(valuesAndColours)
 }
 
 function draw() {
@@ -41,24 +60,26 @@ function draw() {
 }
 
 function drawGraph() {
-  stroke(0)
-  values.forEach((value, index) => {
-    if (states[index] === 1) {
-      fill([255, 0, 0])
-    } else {
-      fill(255)
-    }
+  // stroke(0)
+  noStroke()
+  valuesAndColours.forEach(({value, colour}, index) => {
+    // if (states[index] === 1) {
+    //   fill([255, 0, 0])
+    // } else {
+    //   fill(255)
+    // }
+    fill(colour)
     rect(index * barWidth, height - value, barWidth, value)
   })
 }
 
-async function asyncInsertionSort() {
-  for( let i = 0; i < values.length; i++) {
+async function asyncInsertionSort(arr) {
+  for( let i = 0; i < arr.length; i++) {
     for( let j = i - 1; j > -1; j--) {
-      if (values[j] > values[j+1]) {
+      if (arr[j].value > arr[j+1].value) {
         states[j+1] = 1
         await sleep(delay)
-        swap(values, j, j+1)
+        swap(arr, j, j+1)
         states[j+1] = -1
       }
     }
